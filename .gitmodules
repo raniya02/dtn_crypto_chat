@@ -1,0 +1,3 @@
+[submodule "ud3tn"]
+	path = ud3tn
+	url = https://gitlab.com/d3tn/ud3tn.git
