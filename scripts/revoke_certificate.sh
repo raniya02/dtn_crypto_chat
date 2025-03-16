@@ -42,8 +42,8 @@ RA_SOCKET="ud3tn6.aap2.socket"
 RA_AAP_PORT=4247
 RA_MTCP_PORT=4229
 
-# Set the working directory to the current directory (assumed to be "ud3tn").
-UD3TN_DIR="$(pwd)"
+# Set the working directory.
+UD3TN_DIR="$(pwd)/ud3tn"
 
 # Process ID for the RA instance
 RA_PID=0

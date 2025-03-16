@@ -1,12 +1,29 @@
 # DTN Chat Application
 
-This project implements a terminal-based chat application that facilitates secure communication between users. The application employs a Public Key Infrastructure (PKI) with Elliptic-Curve Diffie-Hellman (ECDH) key exchange and the [NOVOMODO](https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=3d2bb4a0ef5d0035f97562b387fb4e961b1c641b) revocation mechanism for key management.
+This project implements a terminal-based chat application that facilitates secure communication between users. The application serves as a proof of concept for **BERMUDA** (**B**PSec-Compa­tible Key **E**stablishment and **R**evocation **M**echanism for **U**nicast **M**essaging in **D**elay-tolerant **A**pplications), a key management system designed for Delay- and Disruption-Tolerant Networks (DTNs).
+
+BERMUDA employs a Public Key Infrastructure (PKI) for certificate handling, combined with Elliptic-Curve Diffie-Hellman (ECDH) key exchange and the [NOVOMODO](https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=3d2bb4a0ef5d0035f97562b387fb4e961b1c641b) revocation mechanism.
+
+This application is strictly a scientific prototype and is not production-ready.
 
 ## Prerequisites
 
 This application is designed to run on a **POSIX** or **Linux** system. It is also compatible with virtualized environments like VMs or Docker containers.
 
-The DTN chat application relies on the lightweight Bundle Protocol implementation, [µD3TN](https://d3tn.com/ud3tn.html), for basic sending and receiving functions. Ensure that µD3TN is installed and configured on the device before launching the DTN chat application.
+The DTN chat application relies on the lightweight Bundle Protocol implementation, [µD3TN](https://d3tn.com/ud3tn.html), for basic sending and receiving functions. The µD3TN-specific documentation can be found [here](https://d3tn.gitlab.io/ud3tn/).
+
+### Installation
+
+To get started with this project, first, clone the repository and set up µD3TN:
+
+```
+git clone https://github.com/raniya02/dtn_crypto_chat.git
+cd ud3tn
+git checkout v0.14.2
+git submodule update --init --recursive
+make posix ## build µD3TN
+cd ..
+```
 
 ### Dependencies
 
@@ -25,6 +42,17 @@ You can verify the installation with:
 gnome-terminal --version
 ```
 
+The application also requires the following Python packages:
+
+- `cryptography`
+- `psutil`
+
+You can install them using `pip`:
+
+```
+pip install cryptography psutil
+```
+
 Further generalization for compatibility with more operating systems and terminal applications has been deferred to future work.
 
 ## Overview
@@ -35,21 +63,26 @@ The following is the directory structure of the DTN chat application:
 
 ```
 .
-├── ca.py                          // Logic for the Certificate Authority
-├── communication.py               // Handles chat communication between users
-├── generate_CA_keys.py            // Generates Ed25519 key pair for the CA
-├── node.py                        // Abstract base class for users and the CA
-├── revoke_certificate.sh          // Script for the CA to revoke certificates
-├── scal_ca.sh                     // Scalability evaluation logic for the CA 
-├── scal_receiver.sh               // Scalability evaluation logic for a user
-├── scal_user.sh                   // Creates multiple users for scal. eval.
-├── send_revocation_status.sh      // Triggers CA to send revocation status
-|                                     // updates to all users in the system
-├── test_setup.sh                  // Sets up necessary µD3TN instances/contacts
-├── user_no_km.py                  // Simulates communication without any key
-|                                     // management mechanism employed
-├── user.py                        // Logic for regular users in the application
-└── utils.py                       // Defines utility functions
+├── scripts/                         // Contains all shell scripts
+│   ├── revoke_certificate.sh        // Script for the CA to revoke certificates
+│   ├── scal_ca.sh                   // Scalability evaluation logic for the CA
+│   ├── scal_receiver.sh             // Scalability evaluation logic for a user
+│   ├── scal_user.sh                 // Creates multiple users for scalability evaluation
+│   ├── send_revocation_status.sh    // Triggers CA to send revocation status
+│   │                                 // updates to all users in the system
+│   └── test_setup.sh                // Sets up necessary µD3TN instances/contacts
+│
+├── src/                            // Contains all Python files
+│   ├── ca.py                       // Logic for the Certificate Authority
+│   ├── communication.py            // Handles chat communication between users
+│   ├── generate_CA_keys.py         // Generates Ed25519 key pair for the CA
+│   ├── node.py                     // Abstract base class for users and the CA
+│   ├── user.py                     // Logic for regular users in the application
+│   ├── user_no_km.py               // Simulates communication without any key
+│   │                                 // management mechanism employed
+│   └── utils.py                    // Defines utility functions
+│
+└── ud3tn/                           // µD3TN submodule
 ```
 
 There is no central entry point for the application. However, to set up all necessary µD3TN instances and contacts during normal execution (i.e. not for evaluation purposes), run `test_setup.sh` before executing other scripts.
@@ -66,15 +99,16 @@ This object-oriented design simplifies the setup of multiple user instances with
 
 This example scenario aims to demonstrate how the DTN chat application is used to chat with other users. For the purpose of this example, we are "**Alice Armstrong**". 
 
-All the following commands are assumed to be executed from the general *µD3TN* directory.
+***All the following commands are assumed to be executed from the root directory of this repository.***
 
 ### Step 1 - Run µD3TN and Start Certificate Authority
 
-Activate the Python virtual environment and run the setup script in **TERMINAL 1**:
+Activate the Python virtual environment in the `/ud3tn` directory, switch back to the root directory and run the setup script in **TERMINAL 1**:
 
 ```
-source .venv/bin/activate            # activates the Python virtual environment
-test/dtn_crypto_chat/test_setup.sh   # runs the bash script
+cd ud3tn && make virtualenv && source .venv/bin/activate && cd ..
+
+./scripts/test_setup.sh
 ```
 
 To run any Python scripts, it's essential to activate the Python virtual environment. You’ll know the environment is activated when you see `(.venv)` at the beginning of the terminal line.
@@ -98,7 +132,7 @@ The `test_setup.sh` bash script performs the following tasks:
 	- `alice_config`: Used in `user.py` to initialize Alice
 	- `bob_config`: Used in `user.py` to initialize Bob
 	- `carol_config`: Used in `user.py` to initialize Carol
-- Starts the CA Python instance via `test/dtn_crypto_chat/ca.py` and using the generated key pair for the CA.
+- Starts the CA Python instance via `src/ca.py` and using the generated key pair for the CA.
 
 The exact configuration variables for the CA and each of the three users are as follows:
 - **Certificate Authority:**
@@ -132,6 +166,8 @@ The exact configuration variables for the CA and each of the three users are as 
 
 For simplicity, all IP addresses are set to `localhost`, meaning this chat application is intended to run on a single device (for the time being). If you need to test communication between different devices, you’ll need to update the IP addresses in `test_setup.sh` accordingly. Additionally, if the ports used by this chat application are already in use by other services, you’ll need to manually change the port numbers in the script.
 
+As soon as the line `Configuring contact between "Alice" and "Carol" ...` appeared, you can continue with the next step.
+
 ### Step 2 - Start all three users: Alice, Bob, and Carol
 
 In separate terminals, activate the Python virtual environment and start the users:
@@ -140,10 +176,10 @@ In **TERMINAL 2**, execute the following commands:
 
 ```
 # Activate the Python virtual environment:
-source .venv/bin/activate
+cd ud3tn && make virtualenv && source .venv/bin/activate && cd ..
 
 # Start a User instance with Alice's configuration details:
-python test/dtn_crypto_chat/user.py alice_config
+python src/user.py alice_config
 ```
 *Note: To enable print statements that provide more information, add `-p` or `--print-mode` after `alice_config`*
 
@@ -151,10 +187,10 @@ In **TERMINAL 3**, execute the following commands:
 
 ```
 # Activate the Python virtual environment:
-source .venv/bin/activate
+cd ud3tn && make virtualenv && source .venv/bin/activate && cd ..
 
 # Start a User instance with Bob's configuration details:
-python test/dtn_crypto_chat/user.py bob_config
+python src/user.py bob_config
 ```
 *Note: To enable print statements that provide more information, add `-p` or `--print-mode` after `bob_config`*.
 
@@ -162,10 +198,10 @@ In **TERMINAL 4**, execute the following commands:
 
 ```
 # Activate the Python virtual environment:
-source .venv/bin/activate
+cd ud3tn && make virtualenv && source .venv/bin/activate && cd ..
 
 # Start a User instance with Carol's configuration details:
-python test/dtn_crypto_chat/user.py carol_config
+python src/user.py carol_config
 ```
 *Note: To enable print statements that provide more information, add `-p` or `--print-mode` after `carol_config`*
 
@@ -222,15 +258,16 @@ Originally, the key management system was designed to have the CA automatically 
 In **TERMINAL 5**, enter the following commands:
 
 ```
-source .venv/bin/activate   # Activates the Python virtual environment
-test/dtn_crypto_chat/send_revocation_status.sh -m chat   # Runs the bash script
+cd ud3tn && make virtualenv && source .venv/bin/activate && cd ..
+
+./scripts/send_revocation_status.sh -m chat
 ```
 
-This bash script operates in two modes: `chat` for regular usage, as in this case, and "evaluation" for testing purposes.
+This bash script operates in two modes: `chat` for regular usage, as in this case, and `evaluation` for testing purposes.
 
  The script starts a µD3TN instance and establishes a connection between this service instance and the CA. The service instance then sends a specific message to the CA, which triggers the CA to send revocation status updates to each user in the system. In  `chat` mode, it is assumed that the CA's IP address is set to `localhost`. If this is not the case, the correct IP address needs to be manually set in the bash variable `IP_CA` in line 107 of `send_revocation_status.sh`.
 
-If the certificate is generated and the revocation status update is received on the same day, the CA will always have to compute a hash chain of length 365 when calculating the revocation status hash (assuming the certificate's validity period is one year), while the user will have to compute a hash chain of length to verify the revocation status hash. To test the application's functionality with non-zero hash chain lengths for users, a feature to mock the current date is included and triggered in this step. The mocked date is hard-coded to August 9, 2024. If a different date needs to be mocked, you must manually change the `manipulated_date` variable in `node.py` (if the specified date has already passed, it is essential to update this variable). To disable the mocked date functionality, comment in line 60 in `node.py` (`self.manipulated_date = None`) and comment out line 59 (`self.manipulated_date = datetime.datetime(2025, 8, 9)`).
+If the certificate is generated and the revocation status update is received on the same day, the CA will always have to compute a hash chain of length 365 when calculating the revocation status hash (assuming the certificate's validity period is one year), while the user will have to compute a hash chain of length to verify the revocation status hash. To test the application's functionality with non-zero hash chain lengths for users, a feature to mock the current date is included and triggered in this step. The mocked date is **hard-coded to August 9, 2025**. If a different date needs to be mocked (e.g. if this date is already in the past), you must manually change the `manipulated_date` variable in `node.py` (if the specified date has already passed, it is essential to update this variable). To disable the mocked date functionality, comment in line 60 in `node.py` (`self.manipulated_date = None`) and comment out line 59 (`self.manipulated_date = datetime.datetime(2025, 8, 9)`).
 
 After the revocation status update is successfully received, the new status is also integrated into the ongoing chat between Alice and Bob. All subsequent messages between them will include the updated revocation status until another update is received.
 
@@ -273,13 +310,13 @@ Who do you want to write a message to? (or enter 'rr' for a revocation request):
 
 A user might request revocation of their own certificate, for example, if they suspect that their private key has been compromised. This is similar to requesting a credit card cancellation to prevent unauthorized use.
 
-When Alice enters "rr", a message is automatically sent to the CA, which triggers the revocation process. The CA responds by removing Alice’s entry from the revocation database — this database stores the certificate information of all users needed to compute revocation status updates. While in a real-world scenario, this request would require identity verification to prevent malicious revocation requests, this step is omitted in the DTN chat application for simplicity. After initiating the revocation, Alice automatically generates a new public/private key pair and requests a new certificate from the CA. Once issued, the CA adds Alice’s new certificate information to the revocation database.
+When Alice enters `rr`, a message is automatically sent to the CA, which triggers the revocation process. The CA responds by removing Alice’s entry from the revocation database — this database stores the certificate information of all users needed to compute revocation status updates. While in a real-world scenario, this request would require identity verification to prevent malicious revocation requests, this step is omitted in the DTN chat application for simplicity. After initiating the revocation, Alice automatically generates a new public/private key pair and requests a new certificate from the CA. Once issued, the CA adds Alice’s new certificate information to the revocation database.
 
 3. **CA revokes the certificate of a specific user:** In a new terminal (**TERMINAL 6**), enter:
 
 ```
-source .venv/bin/activate                  # Activate Python virtual environment
-test/dtn_crypto_chat/revoke_certificate.sh # start bash script
+cd ud3tn && make virtualenv && source .venv/bin/activate && cd ..
+./scripts/revoke_certificate.sh
 ```
 
 After the prompt appears, enter the name of the user whose certificate the CA should revoke. For example, to revoke Bob Brown’s certificate:
@@ -295,10 +332,10 @@ At this point, Bob remains unaware that his certificate has been revoked because
 In **TERMINAL 5**, enter:
 
 ```
-test/dtn_crypto_chat/send_revocation_status.sh -m chat   # Runs the bash script
+./scripts/send_revocation_status.sh -m chat
 ```
 
-The Python virtual environment should already be active, indicated by `(.venv)` at the beginning of the line. If it's not, you must first enter `source .venv/bin/activate` before running the command.
+The Python virtual environment should already be active, indicated by `(.venv)` at the beginning of the line. If it's not, you must first enter `cd ud3tn && make virtualenv && source .venv/bin/activate && cd ..` before running the command.
 
 After executing this command, the following actions can be observed:
 - Alice’s certificate remains valid, and her computed hash chain has a length of 1, reflecting that the certificate was newly generated after the previous one was revoked (length 1 instead of 0, as the status corresponds to tomorrow).
@@ -322,7 +359,7 @@ There are three primary scripts used for scalability evaluation: `scal_ca.sh`, `
 ```
 # scal_ca.sh :
 
-Usage: test/dtn_crypto_chat/scal_ca.sh -t <TEST_MODE> -u <USER_IP_ADDRESS> [-a <ALICE_IP_ADDRESS>]  
+Usage: ./scripts/scal_ca.sh -t <TEST_MODE> -u <USER_IP_ADDRESS> [-a <ALICE_IP_ADDRESS>]
  -t  TEST_MODE (mandatory, reqcert/revstatus/sendecdh)  
  -u  USER_IP_ADDRESS (mandatory)  
  -a  ALICE_IP_ADDRESS (required if TEST_MODE is 'sendecdh')
@@ -331,7 +368,7 @@ Usage: test/dtn_crypto_chat/scal_ca.sh -t <TEST_MODE> -u <USER_IP_ADDRESS> [-a <
 ```
 # scal_user.sh :
 
-Usage: test/dtn_crypto_chat/scal_user.sh -t <TEST_MODE> -u <AMOUNT_USERS> -r <AMOUNT_RUNS> -c <CA_IP_ADDRESS> [-a <ALICE_IP_ADDRESS>]  
+Usage: ./scripts/scal_user.sh -t <TEST_MODE> -u <AMOUNT_USERS> -r <AMOUNT_RUNS> -c <CA_IP_ADDRESS> [-a <ALICE_IP_ADDRESS>]
  -t  TEST_MODE (mandatory, reqcert/revstatus/sendecdh)  
  -u  AMOUNT_USERS (mandatory, per second)  
  -r  AMOUNT_RUNS (mandatory, TOTAL_USERS = AMOUNT_USERS (per second) * AMOUNT_RUNS)  
@@ -342,7 +379,7 @@ Usage: test/dtn_crypto_chat/scal_user.sh -t <TEST_MODE> -u <AMOUNT_USERS> -r <AM
 ```
 # scal_receiver.sh : 
 
-Usage: test/dtn_crypto_chat/scal_receiver.sh -c <CA_IP_ADDRESS> -s <SENDER_IP_ADDRESS>  
+Usage: ./scripts/scal_receiver.sh -c <CA_IP_ADDRESS> -s <SENDER_IP_ADDRESS>
  -c  CA_IP_ADDRESS (mandatory)  
  -s  SENDER_IP_ADDRESS (mandatory)
 ```
@@ -361,10 +398,10 @@ In **TERMINAL 1**, enter the following commands:
 
 ```
 # Activate the Python virtual environment:
-source .venv/bin/activate
+cd ud3tn && make virtualenv && source .venv/bin/activate && cd ..
 
 # Run the evaluation script for the CA:
-test/dtn_crypto_chat/scal_ca.sh -t reqcert -u <valid IP address>
+./scripts/scal_ca.sh -t reqcert -u <valid IP address>
 ```
 
 - The `-t reqcert` option specifies the evaluation test mode we are using (`reqcert` for certificate requests).
@@ -374,10 +411,10 @@ In **TERMINAL 2**, enter the following commands:
 
 ```
 # Activate the Python virtual environment:
-source .venv/bin/activate
+cd ud3tn && make virtualenv && source .venv/bin/activate && cd ..
 
 # Run the evaluation script for the user:
-test/dtn_crypto_chat/scal_user.sh -t reqcert -u 20 -r 10 -c <valid IP address>
+./scripts/scal_user.sh -t reqcert -u 20 -r 10 -c <valid IP address>
 ```
 
 - Again, `-t reqcert` specifies the test mode.
@@ -430,10 +467,10 @@ In **TERMINAL 1,** enter:
 
 ```
 # Activate the Python virtual environment:
-source .venv/bin/activate
+cd ud3tn && make virtualenv && source .venv/bin/activate && cd ..
 
 # Run the evaluation script for the CA:
-test/dtn_crypto_chat/scal_ca.sh -t revstatus -u <valid IP address>
+./scripts/scal_ca.sh -t revstatus -u <valid IP address>
 ```
 
 - `revstatus` is the test mode we are using in this test.
@@ -443,10 +480,10 @@ In  **TERMINAL 2,** enter:
 
 ```
 # Activate the Python virtual environment:
-source .venv/bin/activate
+cd ud3tn && make virtualenv && source .venv/bin/activate && cd ..
 
 # Run the evaluation script for the user:
-test/dtn_crypto_chat/scal_user.sh -t revstatus -u 20 -r 10 -c <valid IP address>
+./scripts/scal_user.sh -t revstatus -u 20 -r 10 -c <valid IP address>
 
 # Press ENTER right after!!
 ```
@@ -478,10 +515,10 @@ In **TERMINAL 1**, enter:
 
 ```
 # Activate the Python virtual environment:
-source .venv/bin/activate
+cd ud3tn && make virtualenv && source .venv/bin/activate && cd ..
 
 # Run the evaluation script for the CA:
-test/dtn_crypto_chat/scal_ca.sh -t sendecdh -u <valid IP address> -a <valid IP address>
+./scripts/scal_ca.sh -t sendecdh -u <valid IP address> -a <valid IP address>
 ```
 
 - `sendecdh` is the test mode being used.
@@ -491,10 +528,10 @@ In **TERMINAL 2**, enter:
 
 ```
 # Activate the Python virtual environment:
-source .venv/bin/activate
+cd ud3tn && make virtualenv && source .venv/bin/activate && cd ..
 
 # Run the evaluation script for the user:
-test/dtn_crypto_chat/scal_receiver.sh -c <valid IP address> -s <valid IP address>
+./scripts/scal_receiver.sh -c <valid IP address> -s <valid IP address>
 ```
 
 - This script is only relevant for the SENDECDH test mode. Therefore, the test mode does not need to be specified here.
@@ -504,10 +541,10 @@ In **TERMINAL 3**, enter:
 
 ```
 # Activate the Python virtual environment:
-source .venv/bin/activate
+cd ud3tn && make virtualenv && source .venv/bin/activate && cd ..
 
 # Run the evaluation script for Alice (the receiving user):
-test/dtn_crypto_chat/scal_user.sh -t sendecdh -u 20 -r 10 -c <valid IP address> -a <valid IP address>
+./scripts/scal_user.sh -t sendecdh -u 20 -r 10 -c <valid IP address> -a <valid IP address>
 ```
 
 - Again, `sendecdh` is the test mode we are operating in.
@@ -522,10 +559,10 @@ After every user in **TERMINAL 3** has received their certificate, enter the fol
 
 ```
 # Activate the Python virtual environment:
-source .venv/bin/activate
+cd ud3tn && make virtualenv && source .venv/bin/activate && cd ..
 
 # Run the bash script for sending revocation status updates:
-test/dtn_crypto_chat/send_revocation_status.sh -m evaluation -c <valid IP address>
+./scripts/send_revocation_status.sh -m evaluation -c <valid IP address>
 ```
 
  - This time, `send_revocation_status.sh` is triggered in the `evaluation` mode. The key difference between this mode and the `chat` mode (used in regular operation) lies in the configuration of the CA's parameters. In `chat` mode, the CA's IP address is assumed to be `localhost`, whereas in `evaluation` mode, the same IP address is used for the CA as specified in **TERMINAL 2** and **3**.
@@ -615,20 +652,20 @@ In **TERMINAL 1**, enter:
 
 ```
 # Activate the Python virtual environment:
-source .venv/bin/activate
+cd ud3tn && make virtualenv && source .venv/bin/activate && cd ..
 
 # Run the bash script for setting up µD3TN instances and contacts:
-test/dtn_crypto_chat/test_setup.sh
+./scripts/test_setup.sh
 ```
 
 In **TERMINAL 2**, enter:
 
 ```
 # Activate the Python virtual environment:
-source .venv/bin/activate
+cd ud3tn && make virtualenv && source .venv/bin/activate && cd ..
 
 # Run the Python script to set up Bob's Python instance:
-python test/dtn_crypto_chat/user.py bob_config -p --eval-time --eval-time-mode <0/50/100 for different scenarios>
+python src/user.py bob_config -p --eval-time --eval-time-mode <0/50/100 for different scenarios>
 ```
 
 - `-p` enables print statements for more detailed information.
@@ -645,10 +682,10 @@ In **TERMINAL 3**, enter:
 
 ```
 # Activate the Python virtual environment:
-source .venv/bin/activate
+cd ud3tn && make virtualenv && source .venv/bin/activate && cd ..
 
 # Run the Python script to set up Alice's Python instance:
-python test/dtn_crypto_chat/user.py alice_config -p --eval-time --eval-time-mode <0/50/100 for different scenarios>
+python src/user.py alice_config -p --eval-time --eval-time-mode <0/50/100 for different scenarios>
 ```
 
 - Like Bob, Alice's instance runs in `--eval-time` mode, with `--eval-time-mode` set to 0, 50, or 100 percent.
@@ -663,7 +700,7 @@ In summary, this evaluation test with key management performs the following task
 	- However, this step is omitted in this scenario since it is merely an implementation detail and unrelated to the actual approach being tested. Therefore, this procedure is simplified and remains within `user.py` without involving `communication.py`.
 5. Bob, in turn, verifies Alice's revocation status, which is included with the message (again following the mode specified by `--eval-time-mode`), and decrypts the message. He then immediately sends a reply ("Hello, here is Bob!") along with his own revocation status.
 6. Alice also checks Bob's revocation status (according to the same mode) and decrypts his message.
-7. Finally, the time measurements for the entire process are recorded in the file `measurements_key_management.txt`.
+7. Finally, the time measurements for the entire process are recorded in the file `measurements_key_management.txt` in the root directory.
 
 #### Measuring Time Without Key Management
 
@@ -684,30 +721,30 @@ In **TERMINAL 1**, enter:
 
 ```
 # Activate the Python virtual environment:
-source .venv/bin/activate
+cd ud3tn && make virtualenv && source .venv/bin/activate && cd ..
 
 # Run the bash script for setting up µD3TN instances and contacts:
-test/dtn_crypto_chat/test_setup.sh
+./scripts/test_setup.sh
 ```
 
 In **TERMINAL 2**, enter:
 
 ```
 # Activate the Python virtual environment:
-source .venv/bin/activate
+cd ud3tn && make virtualenv && source .venv/bin/activate && cd ..
 
 # Run the Python script for setting up Bob's Python instance:
-python test/dtn_crypto_chat/user_no_km.py bob_config
+python src/user_no_km.py bob_config
 ```
 
 In **TERMINAL 3**, enter:
 
 ```
 # Activate the Python virtual environment:
-source .venv/bin/activate
+cd ud3tn && make virtualenv && source .venv/bin/activate && cd ..
 
 # Run the Python script for setting up Alice's Python instance:
-python test/dtn_crypto_chat/user_no_km.py alice_config
+python src/user_no_km.py alice_config
 ```
 
 In summary, this evaluation test without key management performs the following tasks:
@@ -716,7 +753,7 @@ In summary, this evaluation test without key management performs the following t
 2. Additionally, two Python user instances (one for Alice and one for Bob) are launched within this bash script, with their respective configuration files (`alice_config` and `bob_config`), which are also generated in `test_setup.sh`.
 3. Upon initialization, Alice sends a message to Bob with the content "Hello, here is Alice!", similar to the previous test involving key management.
 4. After Bob receives this message, he replies with "Hello, here is Bob!".
-5. The time between Alice sending her message and receiving Bob's reply is measured. This measurement is then stored in the file `measurements_no_km.txt`.
+5. The time between Alice sending her message and receiving Bob's reply is measured. This measurement is then stored in the file `measurements_no_km.txt` in the root directory.
 
 ## Conclusion
 
@@ -729,4 +766,4 @@ For practical purposes, the system is also evaluated in two main areas: **scalab
 - **Scalability** evaluations test how the system handles multiple users requesting certificates, updating revocation statuses, or initiating ECDH key exchanges. The evaluation scripts (`scal_ca.sh`, `scal_user.sh`, and `scal_receiver.sh`) provide insights into how the CA and users manage CPU and memory resources under various workloads. By simulating different numbers of users and monitoring system performance, we can determine the scalability limits of the chat application.
 - **Temporal Overhead** tests assess the time taken to perform essential tasks like requesting certificates, conducting ECDH key exchanges, and sending/receiving encrypted messages. This is evaluated both with and without key management. The tests illustrate how much time is saved when a user already has a certificate or a pre-established shared key, and how different hash chain lengths affect the verification process. Additionally, a comparison is made by running the system without key management, providing a benchmark for the overhead introduced by the security features.
 
-This chat application was designed as a proof of concept for the chosen key management approach and was developed in the context of a bachelor's thesis. While the system successfully demonstrates secure communication using certificate-based authentication, ECDH key exchanges, and NOVOMODO revocation, there are still many areas for improvement. Future work will focus on optimizing the system's performance, enhancing usability, and refining key management mechanisms to make the application more robust and scalable for real-world scenarios. The current implementation lays the groundwork, with further developments planned to address limitations and expand functionality.
+This chat application was designed as a proof of concept for the **BERMUDA** key management approach and was developed in the context of a bachelor's thesis. While the system successfully demonstrates secure communication using certificate-based authentication, ECDH key exchanges, and NOVOMODO revocation, there are still many areas for improvement. Future work will focus on optimizing the system's performance, enhancing usability, and refining key management mechanisms to make the application more robust and scalable for real-world scenarios. The current implementation lays the groundwork, with further developments planned to address limitations and expand functionality.

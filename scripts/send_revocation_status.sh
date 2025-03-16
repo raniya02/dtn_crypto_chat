@@ -86,8 +86,8 @@ SERVICE_SOCKET="ud3tn5.aap2.socket"
 SERVICE_AAP_PORT=4246
 SERVICE_MTCP_PORT=4228
 
-# # Set the working directory to the current directory (assumed to be "ud3tn").
-UD3TN_DIR="$(pwd)"
+# Set the working director.
+UD3TN_DIR="$(pwd)/ud3tn"
 
 # Process ID for the Service Instance
 SERVICE_PID=0

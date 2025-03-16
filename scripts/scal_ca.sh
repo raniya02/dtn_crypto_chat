@@ -145,8 +145,8 @@ ALICE_MTCP_PORT=4226
 ALICE_EID="dtn://alice-armstrong.dtn/"
 
 
-# Set the working directory to the current directory (assumed to be "ud3tn").
-UD3TN_DIR="$(pwd)"
+# Set the working directory.
+UD3TN_DIR="$(pwd)/ud3tn"
 
 # Process ID for the CA instance.
 CA_PID=0
@@ -254,7 +254,7 @@ fi
 # -------------------------------------------------------------------------------
 
 
-python "$UD3TN_DIR/test/dtn_crypto_chat/ca.py" "$CA_EID" "$CA_AGENTID" "$CA_SOCKET" "$CA_PRIVATE_KEY" "$CA_PUBLIC_KEY" $ARGUMENT &
+python "src/ca.py" "$CA_EID" "$CA_AGENTID" "$UD3TN_DIR/$CA_SOCKET" "$CA_PRIVATE_KEY" "$CA_PUBLIC_KEY" $ARGUMENT &
 CA_PY_PID=$!
 echo "CA Python PID: $CA_PY_PID"
 

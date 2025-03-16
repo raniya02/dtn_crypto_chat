@@ -539,7 +539,7 @@ class User(Node):
         # Open a new terminal:
         command = [
             'gnome-terminal', '--', 'bash', '-c',
-            f'source .venv/bin/activate && python test/dtn_crypto_chat/communication.py '
+            f'cd ud3tn && source .venv/bin/activate && cd .. && python src/communication.py '
             f'{shlex.quote(self.user_name)} '
             f'{shlex.quote(self.socket)} '
             f'{shlex.quote(self.revocation_status)} '

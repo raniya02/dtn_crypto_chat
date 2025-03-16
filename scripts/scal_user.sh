@@ -145,8 +145,8 @@ ALICE_SOCKET="ud3tn3.aap2.socket"
 ALICE_AAP_PORT=4244
 ALICE_MTCP_PORT=4226
 
-# Set the working directory to the current directory (assumed to be "ud3tn").
-UD3TN_DIR="$(pwd)"
+# Set the working directory.
+UD3TN_DIR="$(pwd)/ud3tn"
 
 # Process ID of the User instance
 USER_PID=0
@@ -231,7 +231,7 @@ for i in $(seq 1 $TOTAL_AMOUNT); do
 [user]
 eid=$EID
 agentid=$AGENTID
-socket=$SOCKET
+socket=$UD3TN_DIR/$SOCKET
 user_name=$USER_NAME
 ca_eid=$CA_EID
 ca_agentid=$CA_AGENTID
@@ -239,7 +239,7 @@ ca_public_key=$CA_PUBLIC_KEY
 EOL
 
     USER_CONFIG="user${i}_config"
-    python "$UD3TN_DIR/test/dtn_crypto_chat/user.py" "$USER_CONFIG" "$ARGUMENT" --print-mode &
+    python "$(pwd)/src/user.py" "$USER_CONFIG" "$ARGUMENT" --print-mode &
 
     sleep $SLEEP_TIME
 

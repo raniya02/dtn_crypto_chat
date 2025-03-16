@@ -79,8 +79,8 @@ C_IP_ADDRESS="localhost"
 # -------------------------------------------------------------------------------
 
 
-# Set the working directory to the current directory (assumed to be "ud3tn").
-UD3TN_DIR="$(pwd)"
+# Set the working directory.
+UD3TN_DIR="$(pwd)/ud3tn"
 
 # Process IDs for each entity
 CA_PID=0
@@ -207,7 +207,7 @@ python "$UD3TN_DIR/tools/aap2/aap2_config.py" --socket "$UD3TN_DIR/$C_SOCKET" --
 
 
 # Generate private public key pair of CA:
-KEYS=$(python "$UD3TN_DIR/test/dtn_crypto_chat/generate_CA_keys.py")
+KEYS=$(python "$(pwd)/src/generate_CA_keys.py")
 # Split the output into two variables:
 IFS=',' read -r CA_PRIVATE_KEY CA_PUBLIC_KEY <<< "$KEYS"
 
@@ -223,7 +223,7 @@ cat <<EOL > alice_config
 [user]
 eid=$A_EID
 agentid=$A_AGENTID
-socket=$A_SOCKET
+socket=${UD3TN_DIR}/${A_SOCKET}
 user_name=$A_NAME
 ca_eid=$CA_EID
 ca_agentid=$CA_AGENTID
@@ -235,7 +235,7 @@ cat <<EOL > bob_config
 [user]
 eid=$B_EID
 agentid=$B_AGENTID
-socket=$B_SOCKET
+socket=${UD3TN_DIR}/${B_SOCKET}
 user_name=$B_NAME
 ca_eid=$CA_EID
 ca_agentid=$CA_AGENTID
@@ -247,7 +247,7 @@ cat <<EOL > carol_config
 [user]
 eid=$C_EID
 agentid=$C_AGENTID
-socket=$C_SOCKET
+socket=${UD3TN_DIR}/${C_SOCKET}
 user_name=$C_NAME
 ca_eid=$CA_EID
 ca_agentid=$CA_AGENTID
@@ -262,7 +262,7 @@ EOL
 
 
 # Start Python instance CA:
-python "$UD3TN_DIR/test/dtn_crypto_chat/ca.py" "$CA_EID" "$CA_AGENTID" "$CA_SOCKET" "$CA_PRIVATE_KEY" "$CA_PUBLIC_KEY" &
+python "$(pwd)/src/ca.py" "$CA_EID" "$CA_AGENTID" "$UD3TN_DIR/$CA_SOCKET" "$CA_PRIVATE_KEY" "$CA_PUBLIC_KEY" &
 
 wait $CA_PID $A_PID $B_PID $C_PID
 
