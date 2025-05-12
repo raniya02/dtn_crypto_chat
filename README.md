@@ -8,7 +8,7 @@ This application is strictly a scientific prototype and is not production-ready.
 
 ## Prerequisites
 
-This application is designed to run on a **POSIX** or **Linux** system. It is also compatible with virtualized environments like VMs or Docker containers.
+This application is designed to run on a **Linux** system. Specifically, this prototype was tested on **Ubuntu 22.04 LTS** and the setup instructions in this repository assume an **Ubuntu-based** environment.
 
 The DTN chat application relies on the lightweight Bundle Protocol implementation, [µD3TN](https://d3tn.com/ud3tn.html), for basic sending and receiving functions. The µD3TN-specific documentation can be found [here](https://d3tn.gitlab.io/ud3tn/).
 
@@ -17,17 +17,15 @@ The DTN chat application relies on the lightweight Bundle Protocol implementatio
 To get started with this project, first, clone the repository and set up µD3TN:
 
 ```
-git clone https://github.com/raniya02/dtn_crypto_chat.git
-cd ud3tn
-git checkout v0.14.2
-git submodule update --init --recursive
-make posix ## build µD3TN
+git clone --recursive https://github.com/raniya02/dtn_crypto_chat.git
+cd dtn_crypto_chat/ud3tn
+make posix
 cd ..
 ```
 
 ### Dependencies
 
-For detailed information on µD3TN dependencies, refer to the [µD3TN documentation](https://gitlab.com/d3tn/ud3tn/-/blob/master/README.md?ref_type=heads) and the "Prerequisites" section of its [step-by-step tutorial](https://gitlab.com/d3tn/ud3tn/-/blob/master/doc/posix_quick_start_guide.md#prerequisites).
+For detailed information on µD3TN dependencies, please refer to the [µD3TN documentation](https://d3tn.gitlab.io/ud3tn/posix_quick_start_guide/#prerequisites).
 
 Additionally, the application requires **gnome-terminal**. If not installed, you can install it using the following commands:
 
@@ -47,7 +45,7 @@ The application also requires the following Python packages:
 - `cryptography`
 - `psutil`
 
-You can install them using `pip`:
+You can install them using `pip`. It's recommended to do so within a virtual environment to avoid installing packages system-wide.
 
 ```
 pip install cryptography psutil
